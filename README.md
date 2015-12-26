@@ -22,7 +22,7 @@ be passed to the handlers your register for each Wit intent.
 
 witbot.process(text, any, additional, arguments)
 
-For example, if you're using [botki]() with Slack and you want Wit.ai to process messages for all direct messages
+For example, if you're using [botkit](https://github.com/howdyai/botkit) with Slack and you want Wit.ai to process messages for all direct messages
 and direct mentions:
 
     controller.hears('.*', 'direct_message,direct_mention', function (bot, message) {
@@ -35,6 +35,8 @@ Use `hears` to receive a message that matches an intent for messages you process
 
     witbot.hears(intent_name, confidence, callback)
 
+`hears` expects these parameters:
+
 - `intent_name` is the name of a Wit intent
 - `confidence` is the minimum confidence (e.g. 0.6) between 0 and 1
 - `callback` is a function to fire when the intent is matched. Callback will be passed the parameters you registered
@@ -44,10 +46,10 @@ Use `hears` to receive a message that matches an intent for messages you process
       bot.reply(message, 'Hello to you as well!')
     })
 
-`outcome` has the following properties
+`outcome` has the following properties:
 
 - `_text` is the original text passed to wit
--  `confidence` is a number between 0 and 1
+- `confidence` is a number between 0 and 1
 - `intent` is the first intent that was matched
 - `entities` see the Wit API to learn more about matched entities
 
@@ -60,3 +62,47 @@ Then register intent handlers that expect those parameters in the callback:
     witbot.hears(hello, 0.5, function (foo, bar, outcome) {
       // use foo, bar and outcome
     })
+
+
+## Example
+
+Here's a full example using botkit and [this sample wit.ai project]
+
+    var Botkit = require('botkit')
+    var Witbot = require('witbot')
+
+    var slackToken = process.env.SLACK_TOKEN
+    var witToken = process.env.WIT_TOKEN
+
+    var controller = Botkit.slackbot({
+      debug: false
+    })
+
+    controller.spawn({
+      token: slackToken
+    }).startRTM(function (err, bot, payload) {
+      if (err) {
+        throw new Error('Error connecting to Slack: ', err)
+      }
+      console.log('Connected to Slack')
+    })
+
+    var witbot = Witbot(witToken)
+
+    // wire up DMs and direct mentions to wit.ai
+    controller.hears('.*', 'direct_message,direct_mention', function (bot, message) {
+      witbot.process(message.text, bot, message)
+    })
+
+    witbot.hears('greeting', 0.5, function (bot, message, outcome) {
+      bot.reply(message, 'Hello to you as well!')
+    })
+
+    witbot.hears('how_are_you', 0.5, function (bot, message, outcome) {
+      bot.reply(message, 'I\'m great my friend!')
+    })
+
+
+Don't forget to install this module and botkit:
+
+    npm install --save botkit witbot
