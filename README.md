@@ -66,7 +66,7 @@ Then register intent handlers that expect those parameters in the callback:
 
 ## Example
 
-Here's a full example using botkit and [this sample wit.ai project]
+Here's a full example using botkit and [this sample wit.ai project](https://wit.ai/mbrevoort/botkit-witai)
 
     var Botkit = require('botkit')
     var Witbot = require('witbot')
