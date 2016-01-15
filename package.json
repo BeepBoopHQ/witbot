@@ -1,6 +1,6 @@
 {
   "name": "witbot",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "A simple node.js module for making bots with wit.ai",
   "main": "index.js",
   "scripts": {
