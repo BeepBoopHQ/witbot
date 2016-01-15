@@ -8,6 +8,7 @@ function Intents (witToken) {
   var self = this
   self._intents = {}
   self._witToken = witToken
+  self._catchall = function () {}
 
   self.hears = function (name, confidence, fn) {
     var registration = {
@@ -21,11 +22,16 @@ function Intents (witToken) {
     }
   }
 
+  self.otherwise = function (fn) {
+    self._catchall = fn
+  }
+
 // process text with Wit.ai.
 // 1st argument is the text of the message
 // Remaining arguments will be passed as the first arguments of each registered callback
   self.process = function (text) {
     var args = Array.prototype.slice.call(arguments)
+    var matched = false
     args.shift()
     Wit.captureTextIntent(self._witToken, text, function (err, res) {
       if (err) return console.error('Wit.ai Error: ', err)
@@ -37,12 +43,16 @@ function Intents (witToken) {
         args.push(outcome)
         if (self._intents[intent]) {
           self._intents[intent].forEach(function (registration) {
-            if (outcome.confidence >= registration.confidence) {
+            if (!matched && outcome.confidence >= registration.confidence) {
+              matched = true
               registration.fn.apply(undefined, args)
             }
           })
         }
       }
+
+      // there were no matched outcomes or matched routes
+      if (!matched) self._catchall.apply(undefined, args)
     })
   }
 }

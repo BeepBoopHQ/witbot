@@ -64,12 +64,23 @@ Then register intent handlers that expect those parameters in the callback:
     })
 
 
+### Catch-All with `otherwise`
+
+If you're processing incoming messages with witbot and want to provide a catch-all for unmatched intents and/or
+no intents, use `witbot.otherwise` like this:
+
+    witbot.otherwise(function (foo, bar) {
+      // use foo, bar and outcome
+    })
+
+Your `otherwise` callback will pass along the same parameters you registered with `process`
+
 ## Example
 
 Here's a full example using botkit and [this sample wit.ai project](https://wit.ai/mbrevoort/botkit-witai)
 
     var Botkit = require('botkit')
-    var Witbot = require('witbot')
+    var Witbot = require('../')
 
     var slackToken = process.env.SLACK_TOKEN
     var witToken = process.env.WIT_TOKEN
@@ -100,6 +111,10 @@ Here's a full example using botkit and [this sample wit.ai project](https://wit.
 
     witbot.hears('how_are_you', 0.5, function (bot, message, outcome) {
       bot.reply(message, 'I\'m great my friend!')
+    })
+
+    witbot.otherwise(function (bot, message) {
+      bot.reply(message, 'You are so intelligent, and I am so simple. I don\'t understnd')
     })
 
 
