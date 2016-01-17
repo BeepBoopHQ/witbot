@@ -26,14 +26,13 @@ For example, if you're using [botkit](https://github.com/howdyai/botkit) with Sl
 and direct mentions:
 
     controller.hears('.*', 'direct_message,direct_mention', function (bot, message) {
-      witbot.process(message.text, bot, message)
+      var wit = witbot.process(message.text, bot, message)
     })
 
 ### Register Intent handlers
-
 Use `hears` to receive a message that matches an intent for messages you process:
 
-    witbot.hears(intent_name, confidence, callback)
+    wit.hears(intent_name, confidence, callback)
 
 `hears` expects these parameters:
 
@@ -42,7 +41,7 @@ Use `hears` to receive a message that matches an intent for messages you process
 - `callback` is a function to fire when the intent is matched. Callback will be passed the parameters you registered
   with `process` and then an `outcome parameter`
 
-    witbot.hears('greeting', 0.5, function (bot, message, outcome) {
+    wit.hears('greeting', 0.5, function (bot, message, outcome) {
       bot.reply(message, 'Hello to you as well!')
     })
 
@@ -55,67 +54,90 @@ Use `hears` to receive a message that matches an intent for messages you process
 
 For example, if you call process with `foo` and `bar`:
 
-    witbot.process(text, foo, bar)
+    var wit = witbot.process(text, foo, bar)
 
 Then register intent handlers that expect those parameters in the callback:
 
-    witbot.hears(hello, 0.5, function (foo, bar, outcome) {
+    wit.hears(hello, 0.5, function (foo, bar, outcome) {
       // use foo, bar and outcome
     })
 
 
 ### Catch-All with `otherwise`
-
 If you're processing incoming messages with witbot and want to provide a catch-all for unmatched intents and/or
 no intents, use `witbot.otherwise` like this:
 
-    witbot.otherwise(function (foo, bar) {
+    wit.otherwise(function (foo, bar) {
       // use foo, bar and outcome
     })
 
 Your `otherwise` callback will pass along the same parameters you registered with `process`
 
-## Example
+### Chaining
+You can chain all of the witbot calls for convenience. For example you could do
 
-Here's a full example using botkit and [this sample wit.ai project](https://wit.ai/mbrevoort/botkit-witai)
+    witbot.process(response.text)
+      .hears('good', 0.5, function (outcome) {
+        convo.say('I am so glad to hear it!')
+        convo.next()
+      })
+      .hears('bad', 0.5, function (outcome) {
+        convo.say('I\'m sorry, that is terrible')
+        convo.next()
+      })
+      .otherwise(function (outcome) {
+        convo.say('I\'m cofused')
+        convo.repeat()
+        convo.next()
+      })
+
+
+## Example
+Here's a full example using botkit including a nested conversation flow and [this sample wit.ai project](https://wit.ai/mbrevoort/witbot-sample)
 
     var Botkit = require('botkit')
     var Witbot = require('../')
 
     var slackToken = process.env.SLACK_TOKEN
-    var witToken = process.env.WIT_TOKEN
+    var witbot = Witbot(process.env.WIT_TOKEN)
+    var controller = Botkit.slackbot({ debug: false })
 
-    var controller = Botkit.slackbot({
-      debug: false
-    })
-
-    controller.spawn({
-      token: slackToken
-    }).startRTM(function (err, bot, payload) {
-      if (err) {
-        throw new Error('Error connecting to Slack: ', err)
-      }
+    controller.spawn({ token: slackToken }).startRTM(function (err, bot, payload) {
+      if (err) throw new Error('Error connecting to Slack: ', err)
       console.log('Connected to Slack')
     })
 
-    var witbot = Witbot(witToken)
-
     // wire up DMs and direct mentions to wit.ai
     controller.hears('.*', 'direct_message,direct_mention', function (bot, message) {
-      witbot.process(message.text, bot, message)
+      var wit = witbot.process(message.text, bot, message)
+
+      wit.hears('hello', 0.53, function (bot, message, outcome) {
+        bot.startConversation(message, function (_, convo) {
+          convo.say('Hello!')
+          convo.ask('How are you?', function (response, convo) {
+            witbot.process(response.text)
+              .hears('good', 0.5, function (outcome) {
+                convo.say('I am so glad to hear it!')
+                convo.next()
+              })
+              .hears('bad', 0.5, function (outcome) {
+                convo.say('I\'m sorry, that is terrible')
+                convo.next()
+              })
+              .otherwise(function (outcome) {
+                convo.say('I\'m cofused')
+                convo.repeat()
+                convo.next()
+              })
+          })
+        })
+      })
+
+      wit.otherwise(function (bot, message) {
+        bot.reply(message, 'You are so intelligent, and I am so simple. I don\'t understnd')
+      })
     })
 
-    witbot.hears('greeting', 0.5, function (bot, message, outcome) {
-      bot.reply(message, 'Hello to you as well!')
-    })
-
-    witbot.hears('how_are_you', 0.5, function (bot, message, outcome) {
-      bot.reply(message, 'I\'m great my friend!')
-    })
-
-    witbot.otherwise(function (bot, message) {
-      bot.reply(message, 'You are so intelligent, and I am so simple. I don\'t understnd')
-    })
 
 
 Don't forget to install this module and botkit:
