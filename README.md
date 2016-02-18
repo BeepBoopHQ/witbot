@@ -62,6 +62,11 @@ Then register intent handlers that expect those parameters in the callback:
       // use foo, bar and outcome
     })
 
+### Match any intent with `any`
+
+   wit.any(function (foo, bar, outcome) {
+       // access intent through outcome.intent
+   })
 
 ### Catch-All with `otherwise`
 If you're processing incoming messages with witbot and want to provide a catch-all for unmatched intents and/or

@@ -31,6 +31,9 @@ function Witbot (witToken) {
               registration.fn.apply(undefined, args)
             }
           })
+        } else if (intents._any) {
+          matched = true
+          intents._any.apply(undefined, args)
         }
       }
 
@@ -62,6 +65,11 @@ function Intents () {
 
   self.otherwise = function (fn) {
     self._catchall = fn
+    return self
+  }
+
+  self.any = function (fn) {
+    self._any = fn
     return self
   }
 }
