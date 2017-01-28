@@ -1,4 +1,4 @@
-var Wit = require('node-wit')
+const Wit = require('node-wit').Wit
 
 module.exports = function (witToken) {
   return new Witbot(witToken)
@@ -6,17 +6,31 @@ module.exports = function (witToken) {
 
 function Witbot (witToken) {
   var self = this
-  self._witToken = witToken
+
+  const actions = {
+    say(sessionId, context, message, cb) {
+      cb();
+    },
+    merge(sessionId, context, entities, message, cb) {
+      cb(context);
+    },
+    error(sessionId, context, error) {
+      console.log(error.message);
+    },
+  };
+
+  self._wit = new Wit(witToken, actions)
 
   // process text with Wit.ai.
   // 1st argument is the text of the message
   // Remaining arguments will be passed as the first arguments of each registered callback
-  self.process = function (text) {
+  self.process = function (text, context) {
     var args = Array.prototype.slice.call(arguments)
     var intents = new Intents()
     var matched = false
     args.shift()
-    Wit.captureTextIntent(self._witToken, text, function (err, res) {
+    args.shift()
+    self._wit.message(text, context, function (err, res) {
       if (err) return console.error('Wit.ai Error: ', err)
 
       // only consider the 1st outcome
